@@ -90,19 +90,19 @@ class MySQL implements \LibModel\Iface\Driver
                 $result = $val;
                 break;
             case 'string':
-                $result = '"' . $this->escape($val) . '"';
+                $result = "'" . $this->escape($val) . "'";
                 break;
             case 'array':
                 $result = array_map([$this, 'transVal'], $val);
                 break;
             case 'object':
-                $result = '"' . $this->escape(json_encode($val)) . '"';
+                $result = "'" . $this->escape(json_encode($val)) . "'";
                 break;
             case 'NULL':
                 $result = 'NULL';
                 break;
             default:
-                $result = '"UNKNOW"';
+                $result = "'UNKNOW'";
         }
 
         return $result;

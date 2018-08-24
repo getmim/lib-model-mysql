@@ -30,6 +30,10 @@ return [
             'LibModelMysql\\Library' => [
                 'type' => 'file',
                 'base' => 'modules/lib-model-mysql/library'
+            ],
+            'LibModelMysql\\Migrator' => [
+                'type' => 'file',
+                'base' => 'modules/lib-model-mysql/migrator'
             ]
         ],
         'files' => []
@@ -37,6 +41,9 @@ return [
     'libModel' => [
         'drivers' => [
             'mysql' => 'LibModelMysql\\Driver\\MySQL'
+        ],
+        'migrators' => [
+            'mysql' => 'LibModelMysql\\Migrator\\MySQL'
         ]
     ]
 ];
