@@ -44,31 +44,31 @@ class QueryIndex
     }
 
     static function indexDelete(string $model, array $indexes): string {
-        $tx = '';
+        $res = [];
 
         foreach($indexes as $index)
-            $tx.= self::indexDeleteSingle($model, $index) . PHP_EOL;
+            $res[] = self::indexDeleteSingle($model, $index);
 
-        return $tx;
+        return implode(PHP_EOL, $res);
     }
 
     static function indexCreate(string $model, array $indexes): string {
-        $tx = '';
+        $res = [];
 
-        foreach($indexes as $index)
-            $tx.= self::indexCreateSingle($model, $index) . PHP_EOL;
+        foreach($indexes as $name => $index)
+            $res[] = self::indexCreateSingle($model, $index);
 
-        return $tx;
+        return implode(PHP_EOL, $res);
     }
 
     static function indexUpdate(string $model, array $indexes): string {
-        $tx = '';
+        $res = [];
 
         foreach($indexes as $index){
-            $tx.= self::indexDeleteSingle($model, $index) . PHP_EOL;
-            $tx.= self::indexCreateSingle($model, $index) . PHP_EOL;
+            $res[] = self::indexDeleteSingle($model, $index);
+            $res[] = self::indexCreateSingle($model, $index);
         }
 
-        return $tx;
+        return implode(PHP_EOL, $res);
     }
 }

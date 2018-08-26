@@ -27,10 +27,11 @@ class QueryData
     }
 
     static function dataCreate(string $model, array $rows): string {
-        $tx = '';
-        foreach($rows as $row)
-            $tx.= self::dataCreateSingle($model, $row) . PHP_EOL;
+        $res = [];
 
-        return $tx;
+        foreach($rows as $row)
+            $res[] = self::dataCreateSingle($model, $row);
+
+        return implode(PHP_EOL, $res);
     }
 }

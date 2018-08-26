@@ -85,12 +85,12 @@ class QueryTable
     }
 
     static function fieldCreate(string $model, array $fields, array $diff): string {
-        $tx = '';
+        $res = [];
 
         foreach($diff as $field)
-            $tx.= self::fieldCreateSingle($model, $fields, $field) . PHP_EOL;
+            $res[] = self::fieldCreateSingle($model, $fields, $field);
 
-        return $tx;
+        return implode(PHP_EOL, $res);
     }
 
     static function fieldCreateSingle(string $model, array $fields, array $field): string {
@@ -115,16 +115,17 @@ class QueryTable
     }
 
     static function fieldUpdate(string $model, array $fields, array $diff): string {
-        $tx = '';
+        $res = [];
 
         foreach($diff as $field)
-            $tx.= self::fieldUpdateSingle($model, $fields, $field) . PHP_EOL;
+            $res[] = self::fieldUpdateSingle($model, $fields, $field);
 
-        return $tx;
+        return implode(PHP_EOL, $res);
     }
 
     static function fieldUpdateSingle(string $model, array $fields, array $field): string {
         $sql = '';
+        $prev_field = null;
         foreach($fields as $fld){
             if($fld['name'] === $field['name']){
                 $sql = self::genFieldUpdate($model, $field);
@@ -141,12 +142,12 @@ class QueryTable
     }
 
     static function fieldDelete(string $model, array $fields): string{
-        $tx = '';
+        $res = [];
 
         foreach($fields as $field)
-            $tx.= self::fieldDeleteSingle($model, $field) . PHP_EOL;
+            $res[] = self::fieldDeleteSingle($model, $field);
 
-        return $tx;
+        return implode(PHP_EOL, $res);
     }
 
     static function fieldDeleteSingle(string $model, array $field): string{

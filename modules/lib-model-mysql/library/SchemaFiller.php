@@ -90,32 +90,6 @@ class SchemaFiller
         }
         unset($index);
 
-        // get default indexes from fields ( primary_key and unique )
-        foreach($fields as $name => $field){
-            $unique = $field['attrs']['unique'] ?? false;
-            $primary = $field['attrs']['primary_key'] ?? false;
-
-            if($primary){
-                $indexes['PRIMARY'] = [
-                    'name' => 'PRIMARY',
-                    'type' => 'BTREE',
-                    'fields' => [
-                        $name => []
-                    ]
-                ];
-            }
-
-            if($unique){
-                $indexes[$name] = [
-                    'name' => $name,
-                    'type' => 'BTREE',
-                    'fields' => [
-                        $name => []
-                    ]
-                ];
-            }
-        }
-
         return $indexes;
     }
 

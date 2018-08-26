@@ -69,34 +69,34 @@ class Query
 
         // .table
         if(isset($diff['table_create']) && $diff['table_create'])
-            $tx.= QueryTable::tableCreate($model, $diff['table_create']);
+            $tx.= QueryTable::tableCreate($model, $diff['table_create']) . $nl;
         
         // .fields
         if(isset($diff['field_delete']) && $diff['field_delete'])
-            $tx.= QueryTable::fieldDelete($model, $diff['field_delete']);
+            $tx.= QueryTable::fieldDelete($model, $diff['field_delete']) . $nl;
         
         if(isset($diff['field_create']) && $diff['field_create'])
-            $tx.= QueryTable::fieldCreate($model, $data['fields'], $diff['field_create']);
+            $tx.= QueryTable::fieldCreate($model, $data['fields'], $diff['field_create']) . $nl;
         
         if(isset($diff['field_update']) && $diff['field_update'])
-            $tx.= QueryTable::fieldUpdate($model, $data['fields'], $diff['field_update']);
+            $tx.= QueryTable::fieldUpdate($model, $data['fields'], $diff['field_update']) . $nl;
 
         // .indexes
         if(isset($diff['index_delete']))
-            $tx.= QueryIndex::indexDelete($model, $diff['index_delete']);
+            $tx.= QueryIndex::indexDelete($model, $diff['index_delete']) . $nl;
 
         if(isset($diff['index_create']))
-            $tx.= QueryIndex::indexCreate($model, $diff['index_create']);
+            $tx.= QueryIndex::indexCreate($model, $diff['index_create']) . $nl;
 
         if(isset($diff['index_update']))
-            $tx.= QueryIndex::indexUpdate($model, $diff['index_update']);
+            $tx.= QueryIndex::indexUpdate($model, $diff['index_update']) . $nl;
 
         // .data
         if(isset($diff['data_create']))
-            $tx.= QueryData::dataCreate($model, $diff['data_create']);
+            $tx.= QueryData::dataCreate($model, $diff['data_create']) . $nl;
 
         if($tx)
-            $tx = '-- ' . $model . $nl . $tx;
+            $tx = '-- ' . $model . $nl . $tx . $nl;
 
         return $tx;
     }

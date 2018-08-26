@@ -16,7 +16,7 @@ class Index
 {
 
     static function test(string $model, array $indexes, array $fields): array{
-        $table_indexes  = IndexDescriptor::describe($model);
+        $table_indexes  = IndexDescriptor::describe($model, $fields);
         if(!$table_indexes)
             return ['index_create'=>SchemaFiller::index($indexes, $fields)];
 
@@ -79,6 +79,7 @@ class Index
             }
         }
 
+        deb($result);
         return $result;
     }
 }
