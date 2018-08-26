@@ -78,8 +78,6 @@ class Index
                 $result['index_update'][] = $index;
             }
         }
-
-        deb($result);
         return $result;
     }
 }
