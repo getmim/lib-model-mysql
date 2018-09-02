@@ -739,6 +739,7 @@ class MySQL implements \LibModel\Iface\Driver
             $val_values[$plc_value] = $used_value;
 
             $sets[] = $format;
+            $index++;
         }
 
         $sql.= implode(', ', $sets);
@@ -749,7 +750,7 @@ class MySQL implements \LibModel\Iface\Driver
 
         $sql = $this->putField($sql, $val_fields);
         $sql = $this->putValue($sql, $val_values);
-
+        
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
 
