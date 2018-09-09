@@ -80,11 +80,9 @@ class MySQL implements \LibModel\Iface\Migrator
             $result = array_replace($result, $res_table);
 
         // index structure
-        if(isset($this->data['indexes'])){
-            $res_index = Index::test($this->model, $this->data['indexes'], $this->data['fields']);
-            if($res_index)
-                $result = array_replace($result, $res_index);
-        }
+        $res_index = Index::test($this->model, $this->data['indexes'] ?? [], $this->data['fields']);
+        if($res_index)
+            $result = array_replace($result, $res_index);
 
         // data row
         if(isset($this->data['data'])){

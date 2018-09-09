@@ -25,8 +25,6 @@ class IndexDescriptor
             if($name === 'PRIMARY')
                 continue;
 
-            // skip primary key
-
             // is unique/primary key
             if(isset($fields[$name])){
                 $is_unique  = $fields[$name]['attrs']['unique'] ?? false;
