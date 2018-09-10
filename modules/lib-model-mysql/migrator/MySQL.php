@@ -39,9 +39,7 @@ class MySQL implements \LibModel\Iface\Migrator
 
         if($sql){
             $target_file = $file . '.sql';
-            $f = fopen($target_file, 'a');
-            fwrite($f, $sql);
-            fclose($f);
+            Fs::write($target_file, $sql);
         }
 
         return true;
