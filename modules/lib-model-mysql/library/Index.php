@@ -17,10 +17,14 @@ class Index
 
     static function test(string $model, array $indexes, array $fields): array{
         $table_indexes  = IndexDescriptor::describe($model, $fields);
-        if(!$table_indexes)
-            return ['index_create'=>SchemaFiller::index($indexes, $fields)];
-
         $schema_indexes = SchemaFiller::index($indexes, $fields);
+
+        if(!$table_indexes){
+            if($schema_indexes)
+                return ['index_create'=>$schema_indexes];
+            return [];
+        }
+
 
         $result = [];
 
