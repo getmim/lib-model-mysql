@@ -118,9 +118,9 @@ class MySQL implements \LibModel\Iface\Driver
 
     public function avg(string $field, array $where=[]){
         $sql = $this->putField('SELECT AVG((:field)) AS (:result) (:from)', [
-            'field' => $field,
-            'result' => ['result']
+            'field' => $field
         ]);
+        $sql = $this->putFieldPlain($sql, ['result' => 'result']);
 
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
@@ -138,8 +138,8 @@ class MySQL implements \LibModel\Iface\Driver
     }
 
     public function count(array $where=[]): int{
-        $sql = $this->putField('SELECT COUNT(*) AS (:result) (:from)', [
-            'result' => ['result']
+        $sql = $this->putFieldPlain('SELECT COUNT(*) AS (:result) (:from)', [
+            'result' => 'result'
         ]);
 
         if($where)
@@ -156,17 +156,16 @@ class MySQL implements \LibModel\Iface\Driver
     
     public function countGroup(string $field, array $where=[]): array{
         $sql = 'SELECT (:field) AS (:name), COUNT(*) AS (:total) (:from)';
-        $vals = [
-            'field' => $field,
-            'name'  => ['name'],
-            'total' => ['total']
-        ];
 
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
 
         $sql.= 'GROUP BY (:field)';
-        $sql = $this->putField($sql, $vals);
+        $sql = $this->putField($sql, ['field' => $field]);
+        $sql = $this->putFieldPlain($sql, [
+            'name'  => 'name',
+            'total' => 'total'
+        ]);
 
         $sql = $this->putFrom($sql);
 
@@ -384,9 +383,9 @@ class MySQL implements \LibModel\Iface\Driver
     
     public function max(string $field, array $where=[]){
         $sql = $this->putField('SELECT MAX((:field)) AS (:result) (:from)', [
-            'field' => $field,
-            'result' => ['result']
+            'field' => $field
         ]);
+        $sql = $this->putFieldPlain($sql, ['result' => 'result']);
 
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
@@ -405,9 +404,9 @@ class MySQL implements \LibModel\Iface\Driver
     
     public function min(string $field, array $where=[]){
         $sql = $this->putField('SELECT MIN((:field)) AS (:result) (:from)', [
-            'field' => $field,
-            'result' => ['result']
+            'field' => $field
         ]);
+        $sql = $this->putFieldPlain($sql, ['result' => 'result']);
 
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
@@ -433,6 +432,23 @@ class MySQL implements \LibModel\Iface\Driver
                 $used_val = implode(', ', $all_vals);
             }else{
                 $used_val = $this->transField($val);
+            }
+
+            $sql = str_replace('(:' . $key . ')', $used_val, $sql);
+        }
+
+        return $sql;
+    }
+
+    public function putFieldPlain(string $sql, array $fields): string{
+        foreach($fields as $key => $val){
+            if(is_array($val)){
+                $all_vals = [];
+                foreach($val as $va)
+                    $all_vals[] = vsprintf('`%s`', [$va]);
+                $used_val = implode(', ', $all_vals);
+            }else{
+                $used_val = vsprintf('`%s`', [$val]);
             }
 
             $sql = str_replace('(:' . $key . ')', $used_val, $sql);
@@ -759,9 +775,9 @@ class MySQL implements \LibModel\Iface\Driver
     
     public function sum(string $field, array $where=[]){
         $sql = $this->putField('SELECT SUM((:field)) AS (:result) (:from)', [
-            'field' => $field,
-            'result' => ['result']
+            'field' => $field
         ]);
+        $sql = $this->putFieldPlain($sql, ['result' => 'result']);
 
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
