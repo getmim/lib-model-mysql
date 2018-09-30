@@ -574,6 +574,11 @@ class MySQL implements \LibModel\Iface\Driver
                 foreach($value as $val)
                     $self_conds[] = $this->putWhere('(:where)', $val, 'AND', false);
                 $conds[] = '( ' . implode(' ) OR ( ', $self_conds) . ' )';
+            }elseif(substr($field, 0, 4) === '$and'){
+                $self_conds = [];
+                foreach($value as $val)
+                    $self_conds[] = $this->putWhere('(:where)', $val, 'AND', false);
+                $conds[] = '( ' . implode(' ) AND ( ', $self_conds) . ' )';
             }else{
                 $plc_op = '=';
                 $plc_field = 'fld_' . $index;
