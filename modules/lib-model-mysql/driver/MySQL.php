@@ -116,6 +116,11 @@ class MySQL implements \LibModel\Iface\Driver
         $this->q_field      = $options['q_field'];
     }
 
+    public function autocommit(bool $mode): bool{
+        $conn = $this->getConnection('write');
+        return mysqli_autocommit($conn, $mode);
+    }
+
     public function avg(string $field, array $where=[]){
         $sql = $this->putField('SELECT AVG((:field)) AS (:result) (:from)', [
             'field' => $field
@@ -135,6 +140,11 @@ class MySQL implements \LibModel\Iface\Driver
         if(false !== strstr($result, '.'))
             return (double)$result;
         return (int)$result;
+    }
+
+    public function commit(): bool{
+        $conn = $this->getConnection('write');
+        return mysqli_commit($conn);
     }
 
     public function count(array $where=[]): int{
@@ -721,6 +731,11 @@ class MySQL implements \LibModel\Iface\Driver
         $sql = $this->putFrom($sql);
 
         return !!$this->query($sql, 'write');
+    }
+
+    public function rollback(): bool{
+        $conn = $this->getConnection('write');
+        return mysqli_rollback($conn);
     }
     
     public function set(array $fields, array $where=[]): bool{
