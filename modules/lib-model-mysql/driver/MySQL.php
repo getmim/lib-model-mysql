@@ -116,8 +116,8 @@ class MySQL implements \LibModel\Iface\Driver
         $this->q_field      = $options['q_field'];
     }
 
-    public function autocommit(bool $mode): bool{
-        $conn = $this->getConnection('write');
+    public function autocommit(bool $mode, string $conn='write'): bool{
+        $conn = $this->getConnection($conn);
         return mysqli_autocommit($conn, $mode);
     }
 
@@ -142,8 +142,8 @@ class MySQL implements \LibModel\Iface\Driver
         return (int)$result;
     }
 
-    public function commit(): bool{
-        $conn = $this->getConnection('write');
+    public function commit(string $conn='write'): bool{
+        $conn = $this->getConnection($conn);
         return mysqli_commit($conn);
     }
 
@@ -733,8 +733,8 @@ class MySQL implements \LibModel\Iface\Driver
         return !!$this->query($sql, 'write');
     }
 
-    public function rollback(): bool{
-        $conn = $this->getConnection('write');
+    public function rollback(string $conn='write'): bool{
+        $conn = $this->getConnection($conn);
         return mysqli_rollback($conn);
     }
     
