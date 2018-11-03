@@ -274,7 +274,9 @@ class MySQL implements \LibModel\Iface\Driver
     }
     
     public function get(array $where=[], int $rpp=0, int $page=1, array $order=['id'=>false]): ?array{
-        $sql = 'SELECT * (:from)';
+        $sql = $this->putTable('SELECT (:table).* (:from)', [
+            'table' => $this->getTable()
+        ]);
 
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
@@ -478,6 +480,7 @@ class MySQL implements \LibModel\Iface\Driver
         $fields = [];
 
         if($this->used_join){
+            $this->used_join = array_unique($this->used_join);
             foreach($this->used_join as $index => $field){
                 $chain = $this->chains[$field];
 
@@ -490,8 +493,12 @@ class MySQL implements \LibModel\Iface\Driver
                 $chain_field = $chain['field'];
                 $chain_db    = $chain_model::getDBName();
 
-                $fields[$pcl_chain_parent] = [$field, $main_table, $main_db];
-                $fields[$pcl_chain_own] = [$chain_field, $chain_table, $chain_db];
+                $field_self  = $field;
+                if(isset($chain['self']))
+                    $field_self = $chain['self'];
+
+                $fields[$pcl_chain_parent] = [[$field_self, $main_table, $main_db]];
+                $fields[$pcl_chain_own] = [[$chain_field, $chain_table, $chain_db]];
 
                 $tables[$pcl_chain] = [$chain_table, $chain_model];
 
