@@ -49,3 +49,9 @@ Properti-properti yang bisa diset adalah sebagai berikut:
 
 Jika properti tersebut tidak di set, maka nilai default dari php.ini akan
 diambil.
+
+Untuk pembuatan database, silahkan gunatan syntax seperti di bawah:
+
+```sql 
+CREATE DATABASE `name` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```

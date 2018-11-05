@@ -20,7 +20,7 @@ class QueryTable
     }
 
     private static function genFieldMeta(string $model, array $field, bool $pk=true): string{
-        $sql = $model::putField('(:field)', ['field'=>$field['name']]);
+        $sql = $model::putFieldPlain('(:field)', ['field'=>$field['name']]);
 
         $sql.= ' ' . $field['type'];
         if($field['length'])
@@ -30,7 +30,7 @@ class QueryTable
         if($field['attrs']['unsigned'])
             $sql.= ' UNSIGNED';
         if(in_array($field['type'], ['CHAR', 'ENUM', 'LONGTEXT', 'SET', 'TEXT', 'TINYTEXT', 'VARCHAR']))
-            $sql.= ' COLLATE utf8_unicode_ci';
+            $sql.= ' CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci';
 
         if(!$field['attrs']['null'])
             $sql.= ' NOT NULL';
@@ -164,7 +164,7 @@ class QueryTable
 
     static function tableCreate(string $model, array $fields): string{
         $nl = PHP_EOL;
-        $tx = $model::putTable('CREATE TABLE IF NOT EXISTS (:table)', [
+        $tx = $model::putTable('CREATE TABLE IF NOT EXISTS (:table) ', [
             'table' => $model::getTable()
         ]);
 
@@ -182,7 +182,7 @@ class QueryTable
         $sp = $nl . '    ';
 
         $tx.= '(' . $sp . implode(', ' . $sp, $flds) . $nl . ')';
-        $tx.= ' DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;';
+        $tx.= ' DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;';
 
         return $tx;
     }

@@ -327,7 +327,7 @@ class MySQL implements \LibModel\Iface\Driver
         if(!$used_conns)
             trigger_error('Unable to connect to any of database connection name `' . $name . '`');
 
-        mysqli_set_charset($used_conns, 'utf8');
+        mysqli_set_charset($used_conns, 'utf8mb4');
 
         self::$conns[$name] = [
             'connection' => $used_conns,
