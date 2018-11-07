@@ -186,6 +186,8 @@ class MySQL implements \LibModel\Iface\Driver
     }
     
     public function create(array $row): ?int{
+        if(!$row)
+            return null;
         $sql = 'INSERT INTO (:table) ( (:fields) ) VALUES (:values)';
 
         $sql = $this->putTable($sql, [
@@ -746,6 +748,8 @@ class MySQL implements \LibModel\Iface\Driver
     }
     
     public function set(array $fields, array $where=[]): bool{
+        if(!$fields)
+            return true;
         $sql = 'UPDATE (:table) SET ';
 
         $index = 0;
