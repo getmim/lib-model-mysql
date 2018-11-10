@@ -824,6 +824,30 @@ class MySQL implements \LibModel\Iface\Driver
             return (double)$result;
         return (int)$result;
     }
+
+    public function sumFs(array $fields, array $where=[]){
+        $flds = [];
+        foreach($fields as $field){
+            $fld = $this->putField('SUM((:field)) AS (:alt)', [
+                'field' => $field
+            ]);
+            $fld = $this->putFieldPlain($fld, ['alt' => $field]);
+            $flds[] = $fld;
+        }
+
+        $sql = 'SELECT ' . implode(', ', $flds) . ' (:from)';
+
+        if($where)
+            $sql.= $this->putWhere(' WHERE (:where)', $where);
+
+        $sql = $this->putFrom($sql);
+
+        $result = $this->query($sql, 'read');
+        if(!$result)
+            return null;
+
+        return $result[0];
+    }
     
     public function truncate(string $target='write'): bool{
         $sql = $this->putTable('TRUNCATE (:table);', [
