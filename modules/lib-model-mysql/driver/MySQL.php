@@ -185,10 +185,14 @@ class MySQL implements \LibModel\Iface\Driver
         return array_column($result, 'total', 'name');
     }
     
-    public function create(array $row): ?int{
+    public function create(array $row, bool $ignore=false): ?int{
         if(!$row)
             return null;
-        $sql = 'INSERT INTO (:table) ( (:fields) ) VALUES (:values)';
+
+        $sql = 'INSERT INTO';
+        if($ignore)
+            $sql = 'INSERT IGNORE INTO';
+        $sql.= ' (:table) ( (:fields) ) VALUES (:values)';
 
         $sql = $this->putTable($sql, [
             'table' => $this->getTable()
@@ -207,8 +211,11 @@ class MySQL implements \LibModel\Iface\Driver
         return $this->lastId();
     }
     
-    public function createMany(array $rows): bool{
-        $sql = 'INSERT INTO (:table) ( (:fields) ) VALUES ';
+    public function createMany(array $rows, bool $ignore=false): bool{
+        $sql = 'INSERT INTO';
+        if($ignore)
+            $sql = 'INSERT IGNORE INTO';
+        $sql.= ' (:table) ( (:fields) ) VALUES ';
 
         $sql = $this->putTable($sql, [
             'table' => $this->getTable()
