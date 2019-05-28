@@ -544,9 +544,13 @@ class MySQL implements \LibModel\Iface\Driver
 
         foreach($orders as $field => $target){
             $tgr_text = $target ? 'ASC' : 'DESC';
-            $all_sort[] = $this->putField('(:field) ' . $tgr_text, [
-                'field' => $field
-            ]);
+            if($field === 'RAND()')
+                $all_sort[] = $field;
+            else{
+                $all_sort[] = $this->putField('(:field) ' . $tgr_text, [
+                    'field' => $field
+                ]);
+            }
         }
 
         $self_sql = implode(', ', $all_sort);
