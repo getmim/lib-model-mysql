@@ -263,7 +263,9 @@ class MySQL implements \LibModel\Iface\Driver
     }
     
     public function getOne(array $where=[], array $order=['id'=>false]): ?object{
-        $sql = 'SELECT * (:from)';
+        $sql = $this->putTable('SELECT (:table).* (:from)', [
+            'table' => $this->getTable()
+        ]);
 
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
