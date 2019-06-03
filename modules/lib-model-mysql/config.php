@@ -21,6 +21,18 @@ return [
         ],
         'optional' => []
     ],
+    '__inject' => [
+        [
+            'name' => 'libModel',
+            'question' => 'Would you like to add default connection',
+            'default' => TRUE,
+            'rule' => 'boolean',
+            'injector' => [
+                'class' => 'LibModelMysql\\Library\\Injector',
+                'method' => 'iConnection'
+            ]
+        ]
+    ],
     'autoload' => [
         'classes' => [
             'LibModelMysql\\Driver' => [
