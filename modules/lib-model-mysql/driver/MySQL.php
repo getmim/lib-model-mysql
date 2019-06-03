@@ -185,10 +185,14 @@ class MySQL implements \LibModel\Iface\Driver
         return array_column($result, 'total', 'name');
     }
     
-    public function create(array $row): ?int{
+    public function create(array $row, bool $ignore=false): ?int{
         if(!$row)
             return null;
-        $sql = 'INSERT INTO (:table) ( (:fields) ) VALUES (:values)';
+
+        $sql = 'INSERT INTO';
+        if($ignore)
+            $sql = 'INSERT IGNORE INTO';
+        $sql.= ' (:table) ( (:fields) ) VALUES (:values)';
 
         $sql = $this->putTable($sql, [
             'table' => $this->getTable()
@@ -207,8 +211,11 @@ class MySQL implements \LibModel\Iface\Driver
         return $this->lastId();
     }
     
-    public function createMany(array $rows): bool{
-        $sql = 'INSERT INTO (:table) ( (:fields) ) VALUES ';
+    public function createMany(array $rows, bool $ignore=false): bool{
+        $sql = 'INSERT INTO';
+        if($ignore)
+            $sql = 'INSERT IGNORE INTO';
+        $sql.= ' (:table) ( (:fields) ) VALUES ';
 
         $sql = $this->putTable($sql, [
             'table' => $this->getTable()
@@ -256,7 +263,9 @@ class MySQL implements \LibModel\Iface\Driver
     }
     
     public function getOne(array $where=[], array $order=['id'=>false]): ?object{
-        $sql = 'SELECT * (:from)';
+        $sql = $this->putTable('SELECT (:table).* (:from)', [
+            'table' => $this->getTable()
+        ]);
 
         if($where)
             $sql.= $this->putWhere(' WHERE (:where)', $where);
@@ -537,9 +546,13 @@ class MySQL implements \LibModel\Iface\Driver
 
         foreach($orders as $field => $target){
             $tgr_text = $target ? 'ASC' : 'DESC';
-            $all_sort[] = $this->putField('(:field) ' . $tgr_text, [
-                'field' => $field
-            ]);
+            if($field === 'RAND()')
+                $all_sort[] = $field;
+            else{
+                $all_sort[] = $this->putField('(:field) ' . $tgr_text, [
+                    'field' => $field
+                ]);
+            }
         }
 
         $self_sql = implode(', ', $all_sort);
