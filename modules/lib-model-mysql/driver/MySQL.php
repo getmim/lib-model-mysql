@@ -634,7 +634,7 @@ class MySQL implements \LibModel\Iface\Driver
                     if(!$used_value)
                         continue;
 
-                    if(end($used_value) === '__escape'){
+                    if(end($used_value) === '__!'){
                         array_pop($used_value);
                         $plc_op = 'IN';
                         
