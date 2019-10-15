@@ -16,10 +16,13 @@ class Data
         ];
 
         foreach($data as $field => $rows){
-            foreach($rows as $row){
+            foreach($rows as $v1 => $row){
+                if(!isset($row[$field]))
+                    $row[$field] = $v1;
                 $exists = $model::getOne([$field=>$row[$field]]);
                 if($exists)
                     continue;
+
                 $result['data_create'][] = $row;
             }
         }
