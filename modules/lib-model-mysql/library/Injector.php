@@ -24,7 +24,8 @@ class Injector
                         'main' => [
                             'host'   => Bash::ask(['text' => 'DB Hostname', 'default' => 'localhost']),
                             'user'   => Bash::ask(['text' => 'DB User',     'default' => get_current_user()]),
-                            'passwd' => Bash::ask(['text' => 'DB Name',     'default' => $db_name])
+                            'dbname' => Bash::ask(['text' => 'DB Name',     'default' => $db_name]),
+                            'passwd' => Bash::ask(['text' => 'DB Password', 'default' => ''])
                         ]
                     ]
                 ]

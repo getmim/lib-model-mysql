@@ -24,6 +24,8 @@ class MySQL implements \LibModel\Iface\Driver
     private $q_field;
     private $table;
 
+    private $operators = ['>','<','<=','>=','=','!=','NOT IN'];
+
     private function transField($val): ?string{
         $used_table = $this->getTable();
         $used_db    = $this->getDBName();
@@ -43,8 +45,10 @@ class MySQL implements \LibModel\Iface\Driver
 
             if(!isset($this->chains[$my_field])){
                 trigger_error(
-                    'Field `' . $this->getTable() . '`.`' . $my_field . '`'
-                    . ' don\'t have any reference to other table'
+                    vsprintf('Field `%s`.`%s` don\'t have any reference to other table', [
+                        $this->getTable(),
+                        $my_field
+                    ])
                 );
             }
 
@@ -630,8 +634,15 @@ class MySQL implements \LibModel\Iface\Driver
                     if(!$used_value)
                         continue;
 
-                    switch($used_value[0]){
-                        case '__between':
+                    if(end($used_value) === '__!'){
+                        array_pop($used_value);
+                        $plc_op = 'IN';
+                        
+                    }else{
+                        $used_value_count = count($used_value);
+
+                        if($used_value[0] === '__between' && $used_value_count === 3){
+                            
                             $plc_op = 'BETWEEN';
                             $format = '(:%s) %s (:%s) AND (:%s)';
 
@@ -645,9 +656,9 @@ class MySQL implements \LibModel\Iface\Driver
                             $all_values[$plc_value_max] = $used_value[2];
 
                             $use_value = false;
-                            break;
 
-                        case '__like':
+                        }elseif($used_value[0] === '__like' && $used_value_count > 1 && $used_value_count < 5){
+                            
                             $plc_op     = 'LIKE';
                             $perc_pos   = $used_value[2] ?? 'both';
                             $suffix     = $used_value[3] ?? null;
@@ -676,22 +687,24 @@ class MySQL implements \LibModel\Iface\Driver
                                     $used_value = '%' . $used_value . '%';
                             }
 
-                            break;
-
-                        case '__op':
-                            $plc_op = $used_value[1];
+                        }elseif($used_value[0] === '__op'
+                            && $used_value_count === 3
+                            && in_array($used_value[1], $this->operators)){
+                            
+                            $plc_op     = $used_value[1];
                             $used_value = $used_value[2];
+
                             if(is_null($used_value)){
                                 if($plc_op === '!=')
                                     $plc_op = 'IS NOT';
                                 else
                                     $plc_op = 'IS';
                             }
-                            break;
-
-                        default:
+                        }else{
                             $plc_op = 'IN';
+                        }
                     }
+
                 }elseif(is_null($used_value)){
                     $plc_op = 'IS';
                 }
