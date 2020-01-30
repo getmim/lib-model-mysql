@@ -30,6 +30,53 @@ class MySQL implements \LibModel\Iface\Migrator
         return $this->error;
     }
 
+    public function db(array $configs): bool{
+        $args = [
+            'host'      => ini_get('mysqli.default_host'),
+            'user'      => ini_get('mysqli.default_user'),
+            'passwd'    => ini_get('mysqli.default_pw'),
+            'dbname'    => '',
+            'port'      => ini_get('mysqli.default_port'),
+            'socket'    => ini_get('mysqli.default_socket')
+        ];
+
+        $used_conns = null;
+        foreach($configs as $config){
+            $fn_args = [];
+            foreach($args as $arg => $def)
+                $fn_args[] = $config->$arg ?? $def;
+
+            $dbname = $fn_args[3];
+            $fn_args[3] = NULL;
+
+            $conn = call_user_func_array('mysqli_connect', $fn_args);
+            if(mysqli_connect_error()){
+                $this->error = mysqli_connect_error();
+                return false;
+            }
+
+            $result = mysqli_query($conn, 'SHOW DATABASES;');
+            $rows = $result->fetch_all(MYSQLI_ASSOC);
+            mysqli_free_result($result);
+            $rows = array_column($rows, 'Database');
+
+            if(in_array($dbname, $rows))
+                continue;
+
+            $sql = 'CREATE DATABASE `' . $dbname . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;';
+
+            $result = mysqli_query($conn, $sql);
+            if(!$result){
+                $this->error = mysqli_error($conn);
+                return false;
+            }
+
+            mysqli_close($conn);
+        }
+
+        return true;
+    }
+
     public function schema(string $file): bool{
         $diff = $this->test();
         if(!$diff)
