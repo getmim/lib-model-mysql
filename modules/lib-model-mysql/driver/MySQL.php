@@ -88,9 +88,11 @@ class MySQL implements \LibModel\Iface\Driver
             case 'boolean':
                 $result = $val ? 'TRUE' : 'FALSE';
                 break;
-            case 'integer':
             case 'float':
             case 'double':
+                $result = str_replace(',', '.', $val);
+                break;
+            case 'integer':
                 $result = $val;
                 break;
             case 'string':
