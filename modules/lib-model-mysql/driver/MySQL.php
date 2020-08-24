@@ -29,11 +29,18 @@ class MySQL implements \LibModel\Iface\Driver
     private function transField($val): ?string{
         $used_table = $this->getTable();
         $used_db    = $this->getDBName();
+        $enclose    = true;
 
         if(is_array($val)){
             $used_table = $val[1] ?? null;
             $used_db    = $val[2] ?? null;
-            $val = $val[0];
+            $val        = $val[0];
+
+        }elseif(substr($val,0,1) === '?'){
+            $enclose    = false;
+            $used_table = null;
+            $used_db    = null;
+            $val        = substr($val,1);
 
         }elseif(false !== strstr($val, '.')){
             $vals = explode('.', $val);
@@ -61,11 +68,23 @@ class MySQL implements \LibModel\Iface\Driver
             $used_db    = $chain_model::getDBName();
         }
 
-        if($used_db)
-            return vsprintf('`%s`.`%s`.`%s`', [$used_db, $used_table, $val]);
-        if($used_table)
-            return vsprintf('`%s`.`%s`', [$used_table, $val]);
-        return vsprintf('`%s`', [$val]);
+        $vkey = [];
+        $vval = [];
+
+        if($used_db){
+            $vkey = ['%s','%s','%s'];
+            $vval = [$used_db, $used_table, $val];
+        }elseif($used_table){
+            $vkey = ['%s','%s'];
+            $vval = [$used_table, $val];
+        }else{
+            $vkey = ['%s'];
+            $vval = [$val];
+        }
+
+        $vkey = $enclose ? '`' . implode('`.`', $vkey) . '`' : implode('.', $vkey);
+
+        return vsprintf($vkey, $vval);
     }
 
     private function transTable($val): ?string{
@@ -612,11 +631,13 @@ class MySQL implements \LibModel\Iface\Driver
                 foreach($value as $val)
                     $self_conds[] = $this->putWhere('(:where)', $val, 'AND', false);
                 $conds[] = '( ' . implode(' ) OR ( ', $self_conds) . ' )';
+            
             }elseif(substr($field, 0, 4) === '$and'){
                 $self_conds = [];
                 foreach($value as $val)
                     $self_conds[] = $this->putWhere('(:where)', $val, 'AND', false);
                 $conds[] = '( ' . implode(' ) AND ( ', $self_conds) . ' )';
+            
             }else{
                 $plc_op = '=';
                 $plc_field = 'fld_' . $index;
