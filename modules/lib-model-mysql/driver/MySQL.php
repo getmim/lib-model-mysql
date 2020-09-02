@@ -533,12 +533,17 @@ class MySQL implements \LibModel\Iface\Driver
                 if(isset($chain['self']))
                     $field_self = $chain['self'];
 
+                $join_type   = 'LEFT JOIN';
+                if(isset($chain['join']))
+                    $join_type = $chain['join'] . ' JOIN';
+                $join_type = ' ' . trim($join_type) . ' ';
+
                 $fields[$pcl_chain_parent] = [[$field_self, $main_table, $main_db]];
                 $fields[$pcl_chain_own] = [[$chain_field, $chain_table, $chain_db]];
 
                 $tables[$pcl_chain] = [$chain_table, $chain_model];
 
-                $self_sql.= ' LEFT JOIN (:' . $pcl_chain . ')'
+                $self_sql.= $join_type . '(:' . $pcl_chain . ')'
                     . ' ON (:' . $pcl_chain_parent . ') = (:' . $pcl_chain_own . ')';
             }
         }
