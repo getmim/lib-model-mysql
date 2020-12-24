@@ -11,13 +11,9 @@ class SchemaFiller
 {
 
     private static $opt_by_type = [
-        'BIGINT' => [
-            'length' => 20
-        ],
+        'BIGINT' => [],
 
-        'BOOLEAN' => [
-            'length' => 1
-        ],
+        'BOOLEAN' => [],
 
         'CHAR' => [
             'length' => 1
@@ -37,21 +33,15 @@ class SchemaFiller
 
         'FLOAT' => [],
 
-        'INTEGER' => [
-            'length' => 11
-        ],
+        'INTEGER' => [],
 
         'LONGTEXT' => [],
 
-        'MEDIUMINT' => [
-            'length' => 9
-        ],
+        'MEDIUMINT' => [],
 
         'SET' => [],
 
-        'SMALLINT' => [
-            'length' => 6
-        ],
+        'SMALLINT' => [],
 
         'TEXT' => [],
 
@@ -63,9 +53,7 @@ class SchemaFiller
 
         'TIME' => [],
 
-        'TINYINT' => [
-            'length' => 4
-        ],
+        'TINYINT' => [],
 
         'TINYTEXT' => [],
 
@@ -96,13 +84,13 @@ class SchemaFiller
     static function table(array $fields): array{
         $glob_opt = [
             'options' => [],
-            'length' => null,
-            'attrs' => [
-                'null' => true,
-                'default' => null,
-                'update' => null,
-                'unsigned' => false,
-                'unique' => false,
+            'length'  => null,
+            'attrs'   => [
+                'null'      => true,
+                'default'   => null,
+                'update'    => null,
+                'unsigned'  => false,
+                'unique'    => false,
                 'primary_key' => false,
                 'auto_increment' => false
             ]
@@ -113,26 +101,25 @@ class SchemaFiller
             $value = array_replace_recursive($glob_opt, $value);
         unset($value);
 
-        foreach($fields as &$field){
+        foreach($fields as $name => $field){
             $field['type'] = strtoupper($field['type']);
             if($field['type'] === 'INT')
                 $field['type'] = 'INTEGER';
             $type = $field['type'];
             if(!isset($opt_by_type[$type]))
                 continue;
+
             $def_vals = $opt_by_type[$type];
+
             $field = array_replace_recursive($def_vals, $field);
+
+            if(in_array($type, ['BOOLEAN','BIGINT','MEDIUMINT','INTEGER','SMALLINT','TINYINT']))
+                $field['length'] = null;
 
             // custom fix
             // not null for primary key
             if($field['attrs']['primary_key'])
                 $field['attrs']['null'] = false;
-
-            // length 10 for unsigned integer
-            if($field['attrs']['unsigned']){
-                if(!$field['length'])
-                    $field['length'] = 10;
-            }
 
             // tinyint is for boolean
             if($type === 'BOOLEAN'){
@@ -140,9 +127,10 @@ class SchemaFiller
                 if(!is_null($field['attrs']['default']))
                     $field['attrs']['default'] = (int)$field['attrs']['default'];
             }
-        }
-        unset($field);
 
+            $fields[$name] = $field;
+        }
+        
         return $fields;
     }
 }

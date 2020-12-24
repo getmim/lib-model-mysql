@@ -89,6 +89,7 @@ class Table
 
         if(!$result)
             return null;
+        deb($result);
         return $result;
     }
 }

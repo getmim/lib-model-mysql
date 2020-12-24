@@ -39,18 +39,18 @@ class TableDescriptor
             }elseif(preg_match('!^`(?<name>[^`]+)` (?<type>[a-z]+)(\((?<length>[^)]+)\))?.+?$!', $fld, $match)){
                 $name = $match['name'];
                 $field = [
-                    'name' => $name,            // .
-                    'type' => null,             // .
-                    'length' => null,           // .
-                    'options' => [],            // .
+                    'name' => $name,
+                    'type' => null,
+                    'length' => null,
+                    'options' => [],
                     'attrs' => [
-                        'null' => true,             // .
-                        'unique' => false,          // .
-                        'unsigned' => false,        // .
-                        'default' => null,          // .
-                        'update' => null,           // .
-                        'primary_key' => false,     // .
-                        'auto_increment' => false   // .
+                        'null' => true,
+                        'unique' => false,
+                        'unsigned' => false,
+                        'default' => null,
+                        'update' => null,
+                        'primary_key' => false,
+                        'auto_increment' => false
                     ]
                 ];
 
@@ -68,7 +68,8 @@ class TableDescriptor
                         array_walk($options, function(&$a){ $a = trim($a, " '"); });
                         $field['options'] = $options;
                     }else{
-                        $field['length'] = $length;
+                        if(!in_array($type, ['BIGINT','MEDIUMINT','INTEGER','SMALLINT','TINYINT']))
+                            $field['length'] = $length;
                     }
                 }
 
@@ -114,7 +115,7 @@ class TableDescriptor
 
         foreach($unique_keys as $key)
             $result[$key]['attrs']['unique'] = true;
-
+        
         return $result;
     }
 }
