@@ -34,7 +34,7 @@ class Table
         foreach($table_fields as $name => $field){
             if(isset($schema_fields[$name]))
                 continue;
-            
+
             if(!isset($result['field_delete']))
                 $result['field_delete'] = [];
 
@@ -89,7 +89,6 @@ class Table
 
         if(!$result)
             return null;
-        deb($result);
         return $result;
     }
 }
