@@ -347,6 +347,7 @@ class MySQL implements \LibModel\Iface\Driver
 
         $conns = $this->connections[$target]->configs;
         $used_conns = null;
+        mysqli_report(MYSQLI_REPORT_OFF);
         foreach($conns as $con){
             $fn_args = [];
             foreach($args as $arg => $def)
