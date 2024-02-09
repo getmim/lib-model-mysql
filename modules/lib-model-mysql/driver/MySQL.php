@@ -859,24 +859,31 @@ class MySQL implements \LibModel\Iface\Driver
         return !!$this->query($sql, 'write');
     }
     
-    public function sum(string $field, array $where=[]){
+    public function sum(string $field, array $where=[]) {
         $sql = $this->putField('SELECT SUM((:field)) AS (:result) (:from)', [
             'field' => $field
         ]);
         $sql = $this->putFieldPlain($sql, ['result' => 'result']);
 
-        if($where)
+        if ($where) {
             $sql.= $this->putWhere(' WHERE (:where)', $where);
+        }
 
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result)
+        if(!$result) {
             return 0;
+        }
         $result = $result[0]->result;
+        if (!$result) {
+            return 0;
+        }
 
-        if(false !== strstr($result, '.'))
+        if (false !== strstr($result, '.')) {
             return (double)$result;
+        }
+
         return (int)$result;
     }
 
