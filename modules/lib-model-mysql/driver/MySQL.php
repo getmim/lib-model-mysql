@@ -2,7 +2,7 @@
 /**
  * MySQL driver
  * @package lib-model-mysql
- * @version 0.0.1
+ * @version 0.6.0
  */
 
 namespace LibModelMysql\Driver;
@@ -866,6 +866,11 @@ class MySQL implements \LibModel\Iface\Driver
             $sql.= $this->putWhere(' WHERE (:where)', $where);
 
         return !!$this->query($sql, 'write');
+    }
+
+    public function setTable(string $table): void
+    {
+        $this->table = $table;
     }
     
     public function sum(string $field, array $where=[]) {
