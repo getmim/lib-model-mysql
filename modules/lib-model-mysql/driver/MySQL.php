@@ -83,8 +83,9 @@ class MySQL implements \LibModel\Iface\Driver
         }
 
         $vkey = $enclose ? '`' . implode('`.`', $vkey) . '`' : implode('.', $vkey);
+        $result = vsprintf($vkey, $vval);
 
-        return vsprintf($vkey, $vval);
+        return str_replace('`*`', '*', $result);
     }
 
     private function transTable($val): ?string{

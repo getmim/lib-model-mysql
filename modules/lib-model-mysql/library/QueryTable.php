@@ -155,7 +155,7 @@ class QueryTable
             'table' => $model::getTable()
         ]);
 
-        $sql = $model::putField($sql, [
+        $sql = $model::putFieldPlain($sql, [
             'field' => $field['name']
         ]);
 
