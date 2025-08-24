@@ -2,12 +2,13 @@
 /**
  * MySQL driver
  * @package lib-model-mysql
- * @version 0.6.0
+ * @version 0.7.0
  */
 
 namespace LibModelMysql\Driver;
 
 use LibModelMysql\Library\Table;
+use LibModelMysql\Model\TableMaster;
 
 class MySQL implements \LibModel\Iface\Driver
 {
@@ -26,31 +27,31 @@ class MySQL implements \LibModel\Iface\Driver
 
     private $operators = ['>','<','<=','>=','=','!=','NOT IN'];
 
-    private function transField($val): ?string{
+    private function transField($val): ?string
+    {
         $used_table = $this->getTable();
         $used_db    = $this->getDBName();
         $enclose    = true;
 
-        if(is_array($val)){
+        if (is_array($val)) {
             $used_table = $val[1] ?? null;
             $used_db    = $val[2] ?? null;
             $val        = $val[0];
-
-        }elseif(substr($val,0,1) === '?'){
+        } elseif (substr($val, 0, 1) === '?') {
             $enclose    = false;
             $used_table = null;
             $used_db    = null;
-            $val        = substr($val,1);
-
-        }elseif(false !== strstr($val, '.')){
+            $val        = substr($val, 1);
+        } elseif (false !== strstr($val, '.')) {
             $vals = explode('.', $val);
-            if(count($vals) != 2)
+            if (count($vals) != 2) {
                 trigger_error('Unable to get referense too deep chains');
+            }
 
             $my_field = $vals[0];
             $val      = $vals[1];
 
-            if(!isset($this->chains[$my_field])){
+            if (!isset($this->chains[$my_field])) {
                 trigger_error(
                     vsprintf('Field `%s`.`%s` don\'t have any reference to other table', [
                         $this->getTable(),
@@ -71,13 +72,13 @@ class MySQL implements \LibModel\Iface\Driver
         $vkey = [];
         $vval = [];
 
-        if($used_db){
+        if ($used_db) {
             $vkey = ['%s','%s','%s'];
             $vval = [$used_db, $used_table, $val];
-        }elseif($used_table){
+        } elseif ($used_table) {
             $vkey = ['%s','%s'];
             $vval = [$used_table, $val];
-        }else{
+        } else {
             $vkey = ['%s'];
             $vval = [$val];
         }
@@ -88,9 +89,10 @@ class MySQL implements \LibModel\Iface\Driver
         return str_replace('`*`', '*', $result);
     }
 
-    private function transTable($val): ?string{
-        $model = $this->model; 
-        if(is_array($val)){
+    private function transTable($val): ?string
+    {
+        $model = $this->model;
+        if (is_array($val)) {
             $model = $val[1];
             $val = $val[0];
         }
@@ -100,11 +102,12 @@ class MySQL implements \LibModel\Iface\Driver
         return vsprintf('`%s`.`%s`', [$used_db, $val]);
     }
 
-    private function transVal($val){
+    private function transVal($val)
+    {
         $type = gettype($val);
 
         $result = $val;
-        switch($type){
+        switch ($type) {
             case 'boolean':
                 $result = $val ? 'TRUE' : 'FALSE';
                 break;
@@ -134,7 +137,8 @@ class MySQL implements \LibModel\Iface\Driver
         return $result;
     }
 
-    public function __construct(array $options){
+    public function __construct(array $options)
+    {
         $this->model        = $options['model'];
         $this->table        = $options['table'];
         $this->chains       = $options['chains'];
@@ -142,61 +146,72 @@ class MySQL implements \LibModel\Iface\Driver
         $this->q_field      = $options['q_field'];
     }
 
-    public function autocommit(bool $mode, string $conn='write'): bool{
+    public function autocommit(bool $mode, string $conn = 'write'): bool
+    {
         $conn = $this->getConnection($conn);
         return mysqli_autocommit($conn, $mode);
     }
 
-    public function avg(string $field, array $where=[]){
+    public function avg(string $field, array $where = [])
+    {
         $sql = $this->putField('SELECT AVG((:field)) AS (:result) (:from)', [
             'field' => $field
         ]);
         $sql = $this->putFieldPlain($sql, ['result' => 'result']);
 
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result)
+        if (!$result) {
             return 0;
+        }
         $result = $result[0]->result;
 
-        if(false !== strstr($result, '.'))
+        if (false !== strstr($result, '.')) {
             return (double)$result;
+        }
         return (int)$result;
     }
 
-    public function commit(string $conn='write'): bool{
+    public function commit(string $conn = 'write'): bool
+    {
         $conn = $this->getConnection($conn);
         return mysqli_commit($conn);
     }
 
-    public function count(array $where=[]): int{
+    public function count(array $where = []): int
+    {
         $sql = $this->putFieldPlain('SELECT COUNT(*) AS (:result) (:from)', [
             'result' => 'result'
         ]);
 
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result)
+        if (!$result) {
             return 0;
+        }
         $result = $result[0]->result;
         return (int)$result;
     }
     
-    public function countGroup(string $field, array $where=[]): array{
+    public function countGroup(string $field, array $where = []): array
+    {
         $sql = 'SELECT (:field) AS (:name), COUNT(*) AS (:total) (:from)';
 
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
-        $sql.= 'GROUP BY (:field)';
+        $sql .= 'GROUP BY (:field)';
         $sql = $this->putField($sql, ['field' => $field]);
         $sql = $this->putFieldPlain($sql, [
             'name'  => 'name',
@@ -206,19 +221,23 @@ class MySQL implements \LibModel\Iface\Driver
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result)
+        if (!$result) {
             return [];
+        }
         return array_column($result, 'total', 'name');
     }
     
-    public function create(array $row, bool $ignore=false): ?int{
-        if(!$row)
+    public function create(array $row, bool $ignore = false): ?int
+    {
+        if (!$row) {
             return null;
+        }
 
         $sql = 'INSERT INTO';
-        if($ignore)
+        if ($ignore) {
             $sql = 'INSERT IGNORE INTO';
-        $sql.= ' (:table) ( (:fields) ) VALUES (:values)';
+        }
+        $sql .= ' (:table) ( (:fields) ) VALUES (:values)';
 
         $sql = $this->putTable($sql, [
             'table' => $this->getTable()
@@ -231,111 +250,131 @@ class MySQL implements \LibModel\Iface\Driver
         ]);
 
         $result = $this->query($sql, 'write');
-        if(!$result)
+        if (!$result) {
             return null;
+        }
 
         return $this->lastId();
     }
     
-    public function createMany(array $rows, bool $ignore=false): bool{
+    public function createMany(array $rows, bool $ignore = false): bool
+    {
         $sql = 'INSERT INTO';
-        if($ignore)
+        if ($ignore) {
             $sql = 'INSERT IGNORE INTO';
-        $sql.= ' (:table) ( (:fields) ) VALUES ';
+        }
+        $sql .= ' (:table) ( (:fields) ) VALUES ';
 
         $sql = $this->putTable($sql, [
             'table' => $this->getTable()
         ]);
 
         $fields = [];
-        foreach($rows as $row){
-            foreach($row as $field => $val)
+        foreach ($rows as $row) {
+            foreach ($row as $field => $val) {
                 $fields[] = $field;
+            }
         }
 
         $fields = array_values(array_unique($fields));
-        if(!$fields)
+        if (!$fields) {
             return false;
+        }
 
         $sql = $this->putField($sql, [
             'fields' => $fields
         ]);
 
         $vals = [];
-        foreach($rows as $row){
+        foreach ($rows as $row) {
             $used_values = [];
-            foreach($fields as $field)
+            foreach ($fields as $field) {
                 $used_values[] = $row[$field] ?? null;
+            }
             
             $vals[] = $this->putValue('(:value)', [
                 'value' => $used_values
             ]);
         }
 
-        $sql.= implode(', ', $vals);
+        $sql .= implode(', ', $vals);
 
         return !!$this->query($sql, 'write');
     }
     
-    public function dec(array $fields, array $where=[]): bool{
+    public function dec(array $fields, array $where = []): bool
+    {
         $set_fields = [];
-        foreach($fields as $fld => $val)
+        foreach ($fields as $fld => $val) {
             $set_fields[$fld] = ['__dec', $val];
+        }
         return $this->set($set_fields, $where);
     }
 
-    public function escape(string $str): string{
+    public function escape(string $str): string
+    {
         return mysqli_real_escape_string($this->getConnection('read'), $str);
     }
     
-    public function getOne(array $where=[], array $order=['id'=>false]): ?object{
+    public function getOne(array $where = [], array $order = ['id' => false]): ?object
+    {
         $sql = $this->putTable('SELECT (:table).* (:from)', [
             'table' => $this->getTable()
         ]);
 
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
-        if($order)
-            $sql.= $this->putOrder($order);
+        if ($order) {
+            $sql .= $this->putOrder($order);
+        }
 
-        $sql.= ' LIMIT 1';
+        $sql .= ' LIMIT 1';
 
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result)
+        if (!$result) {
             return null;
+        }
 
         return $result[0];
     }
     
-    public function get(array $where=[], int $rpp=0, int $page=1, array $order=['id'=>false]): ?array{
+    public function get(array $where = [], int $rpp = 0, int $page = 1, array $order = ['id' => false]): ?array
+    {
         $sql = $this->putTable('SELECT (:table).* (:from)', [
             'table' => $this->getTable()
         ]);
 
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
-        if($order)
-            $sql.= $this->putOrder($order);
+        if ($order) {
+            $sql .= $this->putOrder($order);
+        }
 
-        if($rpp)
-            $sql.= $this->putLimit($rpp, $page);
+        if ($rpp) {
+            $sql .= $this->putLimit($rpp, $page);
+        }
 
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result)
+        if (!$result) {
             return null;
+        }
         return $result;
     }
     
-    public function getConnection(string $target='read'): ?object{
+    public function getConnection(string $target = 'read'): ?object
+    {
         $name = $this->getConnectionName($target);
-        if(isset(self::$conns[$name]))
+        if (isset(self::$conns[$name])) {
             return self::$conns[$name]['connection'];
+        }
 
         $args = [
             'host'      => ini_get('mysqli.default_host'),
@@ -349,21 +388,24 @@ class MySQL implements \LibModel\Iface\Driver
         $conns = $this->connections[$target]->configs;
         $used_conns = null;
         mysqli_report(MYSQLI_REPORT_OFF);
-        foreach($conns as $con){
+        foreach ($conns as $con) {
             $fn_args = [];
-            foreach($args as $arg => $def)
+            foreach ($args as $arg => $def) {
                 $fn_args[] = $con->$arg ?? $def;
+            }
 
             $conn = call_user_func_array('mysqli_connect', $fn_args);
-            if(mysqli_connect_error())
+            if (mysqli_connect_error()) {
                 continue;
+            }
             $used_conns = $conn;
             $used_conf  = $con;
             break;
         }
 
-        if(!$used_conns)
+        if (!$used_conns) {
             trigger_error('Unable to connect to any of database connection name `' . $name . '`');
+        }
 
         mysqli_set_charset($used_conns, 'utf8mb4');
 
@@ -375,63 +417,78 @@ class MySQL implements \LibModel\Iface\Driver
         return $used_conns;
     }
     
-    public function getConnectionName(string $target='read'): ?string{
+    public function getConnectionName(string $target = 'read'): ?string
+    {
         return $this->connections[$target]->name;
     }
 
-    public function getDBName(string $target='read'): ?string{
+    public function getDBName(string $target = 'read'): ?string
+    {
         $this->getConnection($target);
         $name = $this->getConnectionName($target);
-        if(isset(self::$conns[$name]))
+        if (isset(self::$conns[$name])) {
             return self::$conns[$name]['config']->dbname;
+        }
         return null;
     }
     
-    public function getDriver(): ?string{
+    public function getDriver(): ?string
+    {
         return 'mysql';
     }
 
-    public function getLastConnection(): ?object{
+    public function getLastConnection(): ?object
+    {
         $last_conn = $this->last_connection_name;
-        if(!$last_conn)
+        if (!$last_conn) {
             return null;
+        }
         return $this->getConnection($last_conn);
     }
     
-    public function getModel(): ?string{
+    public function getModel(): ?string
+    {
         return $this->model;
     }
     
-    public function getTable(): string{
+    public function getTable(): string
+    {
         return $this->table;
     }
     
-    public function inc(array $fields, array $where=[]): bool{
+    public function inc(array $fields, array $where = []): bool
+    {
         $set_fields = [];
-        foreach($fields as $fld => $val)
+        foreach ($fields as $fld => $val) {
             $set_fields[$fld] = ['__inc', $val];
+        }
         return $this->set($set_fields, $where);
     }
     
-    public function lastError(): ?string{
+    public function lastError(): ?string
+    {
         $conn = $this->getLastConnection();
-        if(!$conn)
+        if (!$conn) {
             return null;
+        }
         return $conn->error;
     }
     
-    public function lastId(): ?int{
+    public function lastId(): ?int
+    {
         $conn = $this->getLastConnection();
-        if(!$conn)
+        if (!$conn) {
             return null;
+        }
         return (int)mysqli_insert_id($conn);
     }
     
-    public function lastQuery(): ?string{
+    public function lastQuery(): ?string
+    {
         return $this->last_query;
     }
     
-    public function max(string $field, array $where=[])
+    public function max(string $field, array $where = [])
     {
         $sql = $this->putField('SELECT MAX((:field)) AS (:result) (:from)', [
             'field' => $field
@@ -461,35 +518,41 @@ class MySQL implements \LibModel\Iface\Driver
         return (int)$result;
     }
     
-    public function min(string $field, array $where=[]){
+    public function min(string $field, array $where = [])
+    {
         $sql = $this->putField('SELECT MIN((:field)) AS (:result) (:from)', [
             'field' => $field
         ]);
         $sql = $this->putFieldPlain($sql, ['result' => 'result']);
 
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result)
+        if (!$result) {
             return 0;
+        }
         $result = $result[0]->result;
 
-        if(false !== strstr($result, '.'))
+        if (false !== strstr($result, '.')) {
             return (double)$result;
+        }
         return (int)$result;
     }
     
-    public function putField(string $sql, array $fields): string{
-        foreach($fields as $key => $val){
-            if(is_array($val)){
+    public function putField(string $sql, array $fields): string
+    {
+        foreach ($fields as $key => $val) {
+            if (is_array($val)) {
                 $all_vals = [];
-                foreach($val as $va)
+                foreach ($val as $va) {
                     $all_vals[] = $this->transField($va);
+                }
                 $used_val = implode(', ', $all_vals);
-            }else{
+            } else {
                 $used_val = $this->transField($val);
             }
 
@@ -499,14 +562,16 @@ class MySQL implements \LibModel\Iface\Driver
         return $sql;
     }
 
-    public function putFieldPlain(string $sql, array $fields): string{
-        foreach($fields as $key => $val){
-            if(is_array($val)){
+    public function putFieldPlain(string $sql, array $fields): string
+    {
+        foreach ($fields as $key => $val) {
+            if (is_array($val)) {
                 $all_vals = [];
-                foreach($val as $va)
+                foreach ($val as $va) {
                     $all_vals[] = vsprintf('`%s`', [$va]);
+                }
                 $used_val = implode(', ', $all_vals);
-            }else{
+            } else {
                 $used_val = vsprintf('`%s`', [$val]);
             }
 
@@ -516,7 +581,8 @@ class MySQL implements \LibModel\Iface\Driver
         return $sql;
     }
 
-    public function putFrom($sql){
+    public function putFrom($sql)
+    {
         $self_sql = 'FROM (:table)';
         $main_table = $this->getTable();
         $main_db    = $this->getDBName();
@@ -526,9 +592,9 @@ class MySQL implements \LibModel\Iface\Driver
         ];
         $fields = [];
 
-        if($this->used_join){
+        if ($this->used_join) {
             $this->used_join = array_unique($this->used_join);
-            foreach($this->used_join as $index => $field){
+            foreach ($this->used_join as $index => $field) {
                 $chain = $this->chains[$field];
 
                 $pcl_chain = 'chain_' . $index;
@@ -541,12 +607,14 @@ class MySQL implements \LibModel\Iface\Driver
                 $chain_db    = $chain_model::getDBName();
 
                 $field_self  = $field;
-                if(isset($chain['self']))
+                if (isset($chain['self'])) {
                     $field_self = $chain['self'];
+                }
 
                 $join_type   = 'LEFT JOIN';
-                if(isset($chain['join']))
+                if (isset($chain['join'])) {
                     $join_type = $chain['join'] . ' JOIN';
+                }
                 $join_type = ' ' . trim($join_type) . ' ';
 
                 $fields[$pcl_chain_parent] = [[$field_self, $main_table, $main_db]];
@@ -564,32 +632,37 @@ class MySQL implements \LibModel\Iface\Driver
         return str_replace('(:from)', $self_sql, $sql);
     }
 
-    public function putLimit(int $rpp=12, int $page=1): string{
-        if(!$rpp)
+    public function putLimit(int $rpp = 12, int $page = 1): string
+    {
+        if (!$rpp) {
             return '';
+        }
 
         $sql = ' LIMIT ' . $rpp;
         $offset = 0;
 
         $page--;
         $offset = $page * $rpp;
-        if($offset)
-            $sql.= ' OFFSET ' . $offset;
+        if ($offset) {
+            $sql .= ' OFFSET ' . $offset;
+        }
 
         return $sql;
     }
 
-    public function putOrder(array $orders): string{
-        if(!$orders)
+    public function putOrder(array $orders): string
+    {
+        if (!$orders) {
             return '';
+        }
 
         $all_sort = [];
 
-        foreach($orders as $field => $target){
+        foreach ($orders as $field => $target) {
             $tgr_text = $target ? 'ASC' : 'DESC';
-            if($field === 'RAND()')
+            if ($field === 'RAND()') {
                 $all_sort[] = $field;
-            else{
+            } else {
                 $all_sort[] = $this->putField('(:field) ' . $tgr_text, [
                     'field' => $field
                 ]);
@@ -601,8 +674,9 @@ class MySQL implements \LibModel\Iface\Driver
         return ' ORDER BY ' . $self_sql;
     }
 
-    public function putTable(string $sql, array $values): string{
-        foreach($values as $key => $val){
+    public function putTable(string $sql, array $values): string
+    {
+        foreach ($values as $key => $val) {
             $used_val = $this->transTable($val);
             $sql = str_replace('(:' . $key . ')', $used_val, $sql);
         }
@@ -610,18 +684,21 @@ class MySQL implements \LibModel\Iface\Driver
         return $sql;
     }
     
-    public function putValue(string $sql, array $values): string{
-        foreach($values as $key => $val){
+    public function putValue(string $sql, array $values): string
+    {
+        foreach ($values as $key => $val) {
             $used_val = $this->transVal($val);
-            if(is_array($used_val))
+            if (is_array($used_val)) {
                 $used_val = '( ' . implode(', ', $used_val) . ' )';
+            }
             $sql = str_replace('(:'.$key.')', $used_val, $sql);
         }
 
         return $sql;
     }
     
-    public function putWhere(string $sql, array $where, string $combiner='AND', $group=true): string{
+    public function putWhere(string $sql, array $where, string $combiner = 'AND', $group = true): string
+    {
         $conds = [];
 
         $index = 0;
@@ -629,10 +706,10 @@ class MySQL implements \LibModel\Iface\Driver
         $all_fields = [];
         $all_values = [];
 
-        if(isset($where['q'])){
-            if($this->q_field){
+        if (isset($where['q'])) {
+            if ($this->q_field) {
                 $where['$or_q_field'] = [];
-                foreach($this->q_field as $field){
+                foreach ($this->q_field as $field) {
                     $where['$or_q_field'][] = [
                         $field => ['__like', $where['q'], 'both']
                     ];
@@ -641,20 +718,20 @@ class MySQL implements \LibModel\Iface\Driver
             unset($where['q']);
         }
 
-        foreach($where as $field => $value){
-            if(substr($field, 0, 3) === '$or'){
+        foreach ($where as $field => $value) {
+            if (substr($field, 0, 3) === '$or') {
                 $self_conds = [];
-                foreach($value as $val)
+                foreach ($value as $val) {
                     $self_conds[] = $this->putWhere('(:where)', $val, 'AND', false);
+                }
                 $conds[] = '( ' . implode(' ) OR ( ', $self_conds) . ' )';
-            
-            }elseif(substr($field, 0, 4) === '$and'){
+            } elseif (substr($field, 0, 4) === '$and') {
                 $self_conds = [];
-                foreach($value as $val)
+                foreach ($value as $val) {
                     $self_conds[] = $this->putWhere('(:where)', $val, 'AND', false);
+                }
                 $conds[] = '( ' . implode(' ) AND ( ', $self_conds) . ' )';
-            
-            }else{
+            } else {
                 $plc_op = '=';
                 $plc_field = 'fld_' . $index;
                 $plc_value = 'val_' . $index;
@@ -669,19 +746,18 @@ class MySQL implements \LibModel\Iface\Driver
                 $format = '(:%s) %s (:%s)';
                 $format_vals = [$plc_field, $plc_op, $plc_value];
 
-                if(is_array($used_value)){
-                    if(!$used_value)
+                if (is_array($used_value)) {
+                    if (!$used_value) {
                         continue;
+                    }
 
-                    if(end($used_value) === '__!'){
+                    if (end($used_value) === '__!') {
                         array_pop($used_value);
                         $plc_op = 'IN';
-                        
-                    }else{
+                    } else {
                         $used_value_count = count($used_value);
 
-                        if($used_value[0] === '__between' && $used_value_count === 3){
-                            
+                        if ($used_value[0] === '__between' && $used_value_count === 3) {
                             $plc_op = 'BETWEEN';
                             $format = '(:%s) %s (:%s) AND (:%s)';
 
@@ -695,77 +771,79 @@ class MySQL implements \LibModel\Iface\Driver
                             $all_values[$plc_value_max] = $used_value[2];
 
                             $use_value = false;
-
-                        }elseif($used_value[0] === '__like' && $used_value_count > 1 && $used_value_count < 5){
-                            
+                        } elseif ($used_value[0] === '__like' && $used_value_count > 1 && $used_value_count < 5) {
                             $plc_op     = 'LIKE';
                             $perc_pos   = $used_value[2] ?? 'both';
                             $suffix     = $used_value[3] ?? null;
                             $used_value = $used_value[1];
 
-                            if(is_array($used_value)){
+                            if (is_array($used_value)) {
                                 $add_format = false;
 
                                 $self_where = ['$or' => []];
-                                foreach($used_value as $val)
+                                foreach ($used_value as $val) {
                                     $self_where['$or'][] = [$field => ['__like', $val, $perc_pos, $suffix]];
+                                }
 
                                 $self_combiner = $suffix === 'NOT' ? 'AND' : 'OR';
                                 $self_sql = $this->putWhere('(:where)', $self_where, $self_combiner, false);
                                 $conds[] = $self_sql;
-
-                            }else{
-                                if($suffix)
+                            } else {
+                                if ($suffix) {
                                     $plc_op = $suffix . ' LIKE';
+                                }
 
-                                if($perc_pos === 'left')
+                                if ($perc_pos === 'left') {
                                     $used_value = '%' . $used_value;
-                                elseif($perc_pos === 'right')
+                                } elseif ($perc_pos === 'right') {
                                     $used_value = $used_value . '%';
-                                elseif($perc_pos === 'both')
+                                } elseif ($perc_pos === 'both') {
                                     $used_value = '%' . $used_value . '%';
+                                }
                             }
-
-                        }elseif($used_value[0] === '__op'
+                        } elseif ($used_value[0] === '__op'
                             && $used_value_count === 3
-                            && in_array($used_value[1], $this->operators)){
-                            
+                            && in_array($used_value[1], $this->operators)) {
                             $plc_op     = $used_value[1];
                             $used_value = $used_value[2];
 
-                            if(is_null($used_value)){
-                                if($plc_op === '!=')
+                            if (is_null($used_value)) {
+                                if ($plc_op === '!=') {
                                     $plc_op = 'IS NOT';
-                                else
+                                } else {
                                     $plc_op = 'IS';
+                                }
                             }
-                        }else{
+                        } else {
                             $plc_op = 'IN';
                         }
                     }
-
-                }elseif(is_null($used_value)){
+                } elseif (is_null($used_value)) {
                     $plc_op = 'IS';
                 }
 
-                if($plc_op != $format_vals[1])
+                if ($plc_op != $format_vals[1]) {
                     $format_vals[1] = $plc_op;
+                }
 
-                if($add_format)
+                if ($add_format) {
                     $conds[] = vsprintf($format, $format_vals);
-                if($use_field)
+                }
+                if ($use_field) {
                     $all_fields[$plc_field] = $used_field;
-                if($use_value)
+                }
+                if ($use_value) {
                     $all_values[$plc_value] = $used_value;
+                }
             }
 
             $index++;
         }
 
         $nl = ''; //PHP_EOL;
-        if($group){
+        if ($group) {
             $sql_format = '( ' . implode(' ) ' . $nl . $combiner . ' ( ', $conds) . ' )';
-        }else{
+        } else {
             $sql_format = implode($nl . ' ' . $combiner . ' ', $conds);
         }
 
@@ -777,7 +855,8 @@ class MySQL implements \LibModel\Iface\Driver
         return $sql;
     }
     
-    public function query(string $sql, string $target='read'){
+    public function query(string $sql, string $target = 'read')
+    {
         $this->last_query = $sql;
         $this->used_join = [];
         $this->last_connection_name = $target;
@@ -785,36 +864,44 @@ class MySQL implements \LibModel\Iface\Driver
         $conn = $this->getConnection($target);
         $result = mysqli_query($conn, $sql);
 
-        if(is_bool($result))
+        if (is_bool($result)) {
             return $result;
+        }
 
         $rows = $result->fetch_all(MYSQLI_ASSOC);
         mysqli_free_result($result);
 
-        array_walk($rows, function(&$a){ $a = (object)$a; });
+        array_walk($rows, function (&$a) {
+            $a = (object)$a;
+        });
 
         return $rows;
     }
     
-    public function remove(array $where=[]): bool{
+    public function remove(array $where = []): bool
+    {
         $sql = 'DELETE (:from)';
 
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
         $sql = $this->putFrom($sql);
 
         return !!$this->query($sql, 'write');
     }
 
-    public function rollback(string $conn='write'): bool{
+    public function rollback(string $conn = 'write'): bool
+    {
         $conn = $this->getConnection($conn);
         return mysqli_rollback($conn);
     }
     
-    public function set(array $fields, array $where=[]): bool{
-        if(!$fields)
+    public function set(array $fields, array $where = []): bool
+    {
+        if (!$fields) {
             return true;
+        }
         $sql = 'UPDATE (:table) SET ';
 
         $index = 0;
@@ -822,7 +909,7 @@ class MySQL implements \LibModel\Iface\Driver
         $val_values = [];
         $sets = [];
 
-        foreach($fields as $field => $value){
+        foreach ($fields as $field => $value) {
             $plc_field = 'fld_' . $index;
             $plc_value = 'val_' . $index;
 
@@ -830,18 +917,18 @@ class MySQL implements \LibModel\Iface\Driver
 
             $format = '(:' . $plc_field . ') = (:' . $plc_value . ')';
 
-            if(is_array($value)){
-                if(!$value)
+            if (is_array($value)) {
+                if (!$value) {
                     $used_value = json_encode($value);
-                else{
+                } else {
                     $ops = $value[0];
-                    if($ops === '__inc'){
+                    if ($ops === '__inc') {
                         $format = '(:' . $plc_field . ') = (:' . $plc_field . ') + (:' . $plc_value . ')';
                         $used_value = $value[1];
-                    }elseif($ops === '__dec'){
+                    } elseif ($ops === '__dec') {
                         $format = '(:' . $plc_field . ') = (:' . $plc_field . ') - (:' . $plc_value . ')';
                         $used_value = $value[1];
-                    }else{
+                    } else {
                         $used_value = json_encode($value);
                     }
                 }
@@ -854,7 +941,7 @@ class MySQL implements \LibModel\Iface\Driver
             $index++;
         }
 
-        $sql.= implode(', ', $sets);
+        $sql .= implode(', ', $sets);
 
         $sql = $this->putTable($sql, [
             'table' => $this->getTable()
@@ -863,31 +950,60 @@ class MySQL implements \LibModel\Iface\Driver
         $sql = $this->putField($sql, $val_fields);
         $sql = $this->putValue($sql, $val_values);
         
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
         return !!$this->query($sql, 'write');
     }
 
     public function setTable(string $table): void
     {
+        // Make sure the table exists or clone it from original table
+        $cond = [
+            'model' => $this->model,
+            'type' => 1
+        ];
+        $master = TableMaster::getOne($cond);
+        if (!$master) {
+            $id = TableMaster::create([
+                'model' => $this->model,
+                'type' => 1,
+                'name' => $this->table
+            ]);
+
+            $master = TableMaster::getOne(['id' => $id]);
+        }
+
+        $cond = [
+            'model' => $this->model,
+            'type' => 0,
+            'name' => $table
+        ];
+        if (!TableMaster::getOne($cond)) {
+            TableMaster::create($cond);
+            $query = 'CREATE TABLE `' . $table . '` LIKE `' . $master->name . '`;';
+            self::query($query);
+        }
+
         $this->table = $table;
     }
     
-    public function sum(string $field, array $where=[]) {
+    public function sum(string $field, array $where = [])
+    {
         $sql = $this->putField('SELECT SUM((:field)) AS (:result) (:from)', [
             'field' => $field
         ]);
         $sql = $this->putFieldPlain($sql, ['result' => 'result']);
 
         if ($where) {
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
         }
 
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result) {
+        if (!$result) {
             return 0;
         }
         $result = $result[0]->result;
@@ -902,9 +1018,10 @@ class MySQL implements \LibModel\Iface\Driver
         return (int)$result;
     }
 
-    public function sumFs(array $fields, array $where=[]){
+    public function sumFs(array $fields, array $where = [])
+    {
         $flds = [];
-        foreach($fields as $field){
+        foreach ($fields as $field) {
             $fld = $this->putField('SUM((:field)) AS (:alt)', [
                 'field' => $field
             ]);
@@ -914,24 +1031,26 @@ class MySQL implements \LibModel\Iface\Driver
 
         $sql = 'SELECT ' . implode(', ', $flds) . ' (:from)';
 
-        if($where)
-            $sql.= $this->putWhere(' WHERE (:where)', $where);
+        if ($where) {
+            $sql .= $this->putWhere(' WHERE (:where)', $where);
+        }
 
         $sql = $this->putFrom($sql);
 
         $result = $this->query($sql, 'read');
-        if(!$result)
+        if (!$result) {
             return null;
+        }
 
         return $result[0];
     }
     
-    public function truncate(string $target='write'): bool{
+    public function truncate(string $target = 'write'): bool
+    {
         $sql = $this->putTable('TRUNCATE (:table);', [
             'table' => $this->getTable()
         ]);
 
         return $this->query($sql, 'write');
     }
-    
 }

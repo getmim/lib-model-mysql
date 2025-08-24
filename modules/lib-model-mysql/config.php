@@ -2,7 +2,7 @@
 
 return [
     '__name' => 'lib-model-mysql',
-    '__version' => '0.6.1',
+    '__version' => '0.7.0',
     '__git' => 'git@github.com:getmim/lib-model-mysql.git',
     '__license' => 'MIT',
     '__author' => [
@@ -16,7 +16,7 @@ return [
     '__dependencies' => [
         'required' => [
             [
-                'lib-model' => NULL
+                'lib-model' => null
             ]
         ],
         'optional' => []
@@ -25,7 +25,7 @@ return [
         [
             'name' => 'libModel',
             'question' => 'Would you like to add default connection',
-            'default' => TRUE,
+            'default' => true,
             'rule' => 'boolean',
             'injector' => [
                 'class' => 'LibModelMysql\\Library\\Injector',
@@ -46,6 +46,10 @@ return [
             'LibModelMysql\\Migrator' => [
                 'type' => 'file',
                 'base' => 'modules/lib-model-mysql/migrator'
+            ],
+            'LibModelMysql\\Model' => [
+                'type' => 'file',
+                'base' => 'modules/lib-model-mysql/model'
             ]
         ],
         'files' => []
