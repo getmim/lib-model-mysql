@@ -2,7 +2,7 @@
 /**
  * MySQL driver
  * @package lib-model-mysql
- * @version 0.7.0
+ * @version 0.8.0
  */
 
 namespace LibModelMysql\Driver;
@@ -24,6 +24,7 @@ class MySQL implements \LibModel\Iface\Driver
     private $model;
     private $q_field;
     private $table;
+    private $original_table;
 
     private $operators = ['>','<','<=','>=','=','!=','NOT IN'];
 
@@ -139,11 +140,12 @@ class MySQL implements \LibModel\Iface\Driver
 
     public function __construct(array $options)
     {
-        $this->model        = $options['model'];
-        $this->table        = $options['table'];
-        $this->chains       = $options['chains'];
-        $this->connections  = $options['connections'];
-        $this->q_field      = $options['q_field'];
+        $this->model = $options['model'];
+        $this->table = $options['table'];
+        $this->original_table = $options['table'];
+        $this->chains = $options['chains'];
+        $this->connections = $options['connections'];
+        $this->q_field = $options['q_field'];
     }
 
     public function autocommit(bool $mode, string $conn = 'write'): bool
@@ -449,6 +451,11 @@ class MySQL implements \LibModel\Iface\Driver
     public function getModel(): ?string
     {
         return $this->model;
+    }
+
+    public function getOriginalTable(): string
+    {
+        return $this->original_table;
     }
     
     public function getTable(): string
@@ -964,15 +971,12 @@ class MySQL implements \LibModel\Iface\Driver
             'model' => $this->model,
             'type' => 1
         ];
-        $master = TableMaster::getOne($cond);
-        if (!$master) {
+        if (!TableMaster::getOne($cond)) {
             $id = TableMaster::create([
                 'model' => $this->model,
                 'type' => 1,
-                'name' => $this->table
+                'name' => $this->original_table
             ]);
-
-            $master = TableMaster::getOne(['id' => $id]);
         }
 
         $cond = [
@@ -982,7 +986,7 @@ class MySQL implements \LibModel\Iface\Driver
         ];
         if (!TableMaster::getOne($cond)) {
             TableMaster::create($cond);
-            $query = 'CREATE TABLE `' . $table . '` LIKE `' . $master->name . '`;';
+            $query = 'CREATE TABLE `' . $table . '` LIKE `' . $this->original_table . '`;';
             self::query($query);
         }
 
