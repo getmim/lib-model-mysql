@@ -2,7 +2,7 @@
 /**
  * MySQL driver
  * @package lib-model-mysql
- * @version 0.9.0
+ * @version 0.10.0
  */
 
 namespace LibModelMysql\Driver;
@@ -964,10 +964,10 @@ class MySQL implements \LibModel\Iface\Driver
         return !!$this->query($sql, 'write');
     }
 
-    public function setTable(string $table): void
+    public function setTable(string $table, bool $create = true): bool
     {
         if ($this->table == $table) {
-            return;
+            return true;
         }
 
         // Make sure the table exists or clone it from original table
@@ -989,19 +989,25 @@ class MySQL implements \LibModel\Iface\Driver
             'name' => $table
         ];
         if (!TableMaster::getOne($cond)) {
-            TableMaster::create($cond);
-            $query = 'CREATE TABLE `' . $table . '` LIKE `' . $this->original_table . '`;';
-            self::query($query);
+            if ($create) {
+                TableMaster::create($cond);
+                $query = 'CREATE TABLE `' . $table . '` LIKE `' . $this->original_table . '`;';
+                self::query($query);
+            } else {
+                return false;
+            }
         }
 
         $this->table = $table;
+        return true;
     }
 
-    public function setTableShard(string $shard): void
+    public function setTableShard(string $shard, bool $create = true): bool
     {
-        $table = $this->original_table;
-        $name = $table . '_' . $shard;
-        $this->setTable($name);
+        $p_table = $this->original_table;
+        $table = $p_table . '_' . $shard;
+
+        return $this->setTable($table, $create);
     }
     
     public function sum(string $field, array $where = [])
