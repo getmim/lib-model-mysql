@@ -2,7 +2,7 @@
 /**
  * MySQL driver
  * @package lib-model-mysql
- * @version 0.8.0
+ * @version 0.9.0
  */
 
 namespace LibModelMysql\Driver;
@@ -966,6 +966,10 @@ class MySQL implements \LibModel\Iface\Driver
 
     public function setTable(string $table): void
     {
+        if ($this->table == $table) {
+            return;
+        }
+
         // Make sure the table exists or clone it from original table
         $cond = [
             'model' => $this->model,
@@ -991,6 +995,13 @@ class MySQL implements \LibModel\Iface\Driver
         }
 
         $this->table = $table;
+    }
+
+    public function setTableShard(string $shard): void
+    {
+        $table = $this->original_table;
+        $name = $table . '_' . $shard;
+        $this->setTable($name);
     }
     
     public function sum(string $field, array $where = [])
