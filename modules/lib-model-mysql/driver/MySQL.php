@@ -990,9 +990,12 @@ class MySQL implements \LibModel\Iface\Driver
         ];
         if (!TableMaster::getOne($cond)) {
             if ($create) {
+                $otable = $this->original_table;
+                $query = "CREATE TABLE `$table` LIKE `$otable`;";
+                if (!self::query($query)) {
+                    return false;
+                }
                 TableMaster::create($cond);
-                $query = 'CREATE TABLE `' . $table . '` LIKE `' . $this->original_table . '`;';
-                self::query($query);
             } else {
                 return false;
             }
