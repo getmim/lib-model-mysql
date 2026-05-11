@@ -2,18 +2,17 @@
 /**
  * MySQL migrator
  * @package lib-model-mysql
- * @version 0.0.1
+ * @version 1.0.0
  */
 
 namespace LibModelMysql\Migrator;
 
-use LibModelMysql\Library\{
-    Data,
-    Index,
-    Query,
-    Table
-};
+use LibModelMysql\Library\Data;
+use LibModelMysql\Library\Index;
+use LibModelMysql\Library\Query;
+use LibModelMysql\Library\Table;
 use Mim\Library\Fs;
+use LibModelMysql\Model\TableMaster;
 
 class MySQL implements \LibModel\Iface\Migrator
 {
@@ -21,16 +20,19 @@ class MySQL implements \LibModel\Iface\Migrator
     private $data;
     private $error;
 
-    public function __construct(string $model, array $data){
+    public function __construct(string $model, array $data)
+    {
         $this->model = $model;
         $this->data  = $data;
     }
 
-    public function lastError(): ?string{
+    public function lastError(): ?string
+    {
         return $this->error;
     }
 
-    public function db(array $configs): bool{
+    public function db(array $configs): bool
+    {
         $args = [
             'host'      => ini_get('mysqli.default_host'),
             'user'      => ini_get('mysqli.default_user'),
@@ -41,16 +43,17 @@ class MySQL implements \LibModel\Iface\Migrator
         ];
 
         $used_conns = null;
-        foreach($configs as $config){
+        foreach ($configs as $config) {
             $fn_args = [];
-            foreach($args as $arg => $def)
+            foreach ($args as $arg => $def) {
                 $fn_args[] = $config->$arg ?? $def;
+            }
 
             $dbname = $fn_args[3];
-            $fn_args[3] = NULL;
+            $fn_args[3] = null;
 
             $conn = call_user_func_array('mysqli_connect', $fn_args);
-            if(mysqli_connect_error()){
+            if (mysqli_connect_error()) {
                 $this->error = mysqli_connect_error();
                 return false;
             }
@@ -60,13 +63,14 @@ class MySQL implements \LibModel\Iface\Migrator
             mysqli_free_result($result);
             $rows = array_column($rows, 'Database');
 
-            if(in_array($dbname, $rows))
+            if (in_array($dbname, $rows)) {
                 continue;
+            }
 
             $sql = 'CREATE DATABASE `' . $dbname . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;';
 
             $result = mysqli_query($conn, $sql);
-            if(!$result){
+            if (!$result) {
                 $this->error = mysqli_error($conn);
                 return false;
             }
@@ -77,37 +81,55 @@ class MySQL implements \LibModel\Iface\Migrator
         return true;
     }
 
-    public function schema(string $file): bool{
-        $diff = $this->test();
-        if(!$diff)
+    public function getShards(): ?array
+    {
+        $cond = [
+            'model' => $this->model
+        ];
+        $rows = TableMaster::get($cond, 0, 1, ['id' => true]);
+
+        if (!$rows) {
+            return null;
+        }
+
+        return array_column($rows, 'name');
+    }
+
+    public function schema(string $table): bool
+    {
+        $diff = $this->test($table);
+        if (!$diff) {
             return true;
+        }
 
         $sql = Query::build($this->model, $this->data, $diff);
 
-        if($sql){
-            $target_file = $file . '.sql';
-            Fs::write($target_file, $sql, true);
+        if ($sql) {
+            echo $sql . PHP_EOL;
         }
 
         return true;
     }
 
-    public function start(): bool{
-        $diff = $this->test();
-        if(!$diff)
+    public function start(string $table): bool
+    {
+        $diff = $this->test($table);
+        if (!$diff) {
             return true;
+        }
 
         $sqls = Query::buildMutliple($this->model, $this->data, $diff, false);
-        if(!$sqls)
+        if (!$sqls) {
             return true;
+        }
 
         $model = $this->model;
 
         $result = true;
 
-        foreach($sqls as $sql){
+        foreach ($sqls as $sql) {
             $res = $model::query($sql, 'write');
-            if(!$res){
+            if (!$res) {
                 $result = false;
                 $this->error = $model::lastError();
             }
@@ -116,24 +138,32 @@ class MySQL implements \LibModel\Iface\Migrator
         return $result;
     }
 
-    public function test(): ?array{
+    public function test(string $table): ?array
+    {
+        $this->model::setTable($table, false);
+
         $result = [];
+        $fields = $this->data['fields'];
+        $indexes = $this->data['indexes'] ?? [];
         
         // table structure
-        $res_table = Table::test($this->model, $this->data['fields']);
-        if($res_table)
+        $res_table = Table::test($this->model, $fields);
+        if ($res_table) {
             $result = array_replace($result, $res_table);
+        }
 
         // index structure
-        $res_index = Index::test($this->model, $this->data['indexes'] ?? [], $this->data['fields']);
-        if($res_index)
+        $res_index = Index::test($this->model, $indexes, $fields);
+        if ($res_index) {
             $result = array_replace($result, $res_index);
+        }
 
         // data row
-        if(isset($this->data['data'])){
+        if (isset($this->data['data'])) {
             $res_data = Data::test($this->model, $this->data['data']);
-            if($res_data)
+            if ($res_data) {
                 $result = array_replace($result, $res_data);
+            }
         }
 
         return $result;
