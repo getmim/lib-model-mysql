@@ -666,13 +666,26 @@ class MySQL implements \LibModel\Iface\Driver
         $all_sort = [];
 
         foreach ($orders as $field => $target) {
-            $tgr_text = $target ? 'ASC' : 'DESC';
-            if ($field === 'RAND()') {
-                $all_sort[] = $field;
+            if (is_array($target)) {
+                $sort = 'CASE ';
+                foreach ($target as $index => $val) {
+                    $fld = $this->putField("WHEN (:field) = $val THEN $index ", [
+                        'field' => $field
+                    ]);
+                    $sort .= $fld;
+                }
+                $sort .= 'ELSE ' . ($index + 1);
+                $sort .= ' END ASC';
+                $all_sort[] = $sort;
             } else {
-                $all_sort[] = $this->putField('(:field) ' . $tgr_text, [
-                    'field' => $field
-                ]);
+                $tgr_text = $target ? 'ASC' : 'DESC';
+                if ($field === 'RAND()') {
+                    $all_sort[] = $field;
+                } else {
+                    $all_sort[] = $this->putField('(:field) ' . $tgr_text, [
+                        'field' => $field
+                    ]);
+                }
             }
         }
 

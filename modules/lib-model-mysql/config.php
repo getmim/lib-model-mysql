@@ -2,7 +2,7 @@
 
 return [
     '__name' => 'lib-model-mysql',
-    '__version' => '1.0.1',
+    '__version' => '1.1.0',
     '__git' => 'git@github.com:getmim/lib-model-mysql.git',
     '__license' => 'MIT',
     '__author' => [
